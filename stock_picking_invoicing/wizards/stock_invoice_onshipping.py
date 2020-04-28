@@ -401,7 +401,7 @@ class StockInvoiceOnshipping(models.TransientModel):
         :param invoice: account.invoice
         :return: dict
         """
-        name = ", ".join(moves.mapped("product_id.name"))
+        name = ", ".join(moves.mapped("name"))
         move = fields.first(moves)
         product = move.product_id
         fiscal_position = self.env['account.fiscal.position'].browse(
@@ -455,6 +455,7 @@ class StockInvoiceOnshipping(models.TransientModel):
             'invoice_id': invoice.id,
         })
         values = self._simulate_invoice_line_onchange(values)
+        values.update({'name': name})
         return values
 
     @api.multi
