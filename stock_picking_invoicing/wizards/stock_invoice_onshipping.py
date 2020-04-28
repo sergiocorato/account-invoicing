@@ -401,7 +401,7 @@ class StockInvoiceOnshipping(models.TransientModel):
         :param invoice: account.invoice
         :return: dict
         """
-        name = ", ".join(moves.mapped("product_id.name"))
+        name = ", ".join(moves.mapped("name"))
         move = fields.first(moves)
         product = move.product_id
         fiscal_position = self.env['account.fiscal.position'].browse(
@@ -441,20 +441,35 @@ class StockInvoiceOnshipping(models.TransientModel):
         taxes = moves._get_taxes(fiscal_position, inv_type)
         price = moves._get_price_unit_invoice(
             inv_type, partner_id, quantity)
+        discount = 0.0
+        purchase_line_id = False
+        if inv_type in ['in_invoice', 'in_refund']:
+            if len(moves.mapped('purchase_line_id')) == 1:
+                purchase_line_id = moves.mapped('purchase_line_id')[0]
+                price = purchase_line_id.price_unit
+                discount = purchase_line_id.discount
+
         line_obj = self.env['account.invoice.line']
         values = line_obj.default_get(line_obj.fields_get().keys())
+        uom_id = moves.mapped('product_uom')[0] \
+            if len(moves.mapped('product_uom')) == 1 else product.uom_id
+        if uom_id.id != product.uom_id.id:
+            price *= uom_id.factor / product.uom_id.factor
         values.update({
             'name': name,
             'account_id': account.id,
             'product_id': product.id,
-            'uom_id': product.uom_id.id,
+            'uom_id': uom_id.id,
             'quantity': quantity,
             'price_unit': price,
+            'discount': discount,
             'invoice_line_tax_ids': [(6, 0, taxes.ids)],
             'move_line_ids': move_line_ids,
             'invoice_id': invoice.id,
+            'purchase_line_id': purchase_line_id.id if purchase_line_id else False,
         })
         values = self._simulate_invoice_line_onchange(values)
+        values.update({'name': name})
         return values
 
     @api.multi
