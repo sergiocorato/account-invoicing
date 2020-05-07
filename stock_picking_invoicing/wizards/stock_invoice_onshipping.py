@@ -517,6 +517,7 @@ class StockInvoiceOnshipping(models.TransientModel):
                     pickings
                 )
                 lines = [(5, 0, {})]
+                line_values = False
                 for moves in moves_list:
                     line_values = self._get_invoice_line_values(
                         moves, invoice_values, invoice
