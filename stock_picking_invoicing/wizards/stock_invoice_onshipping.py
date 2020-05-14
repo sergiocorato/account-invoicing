@@ -526,6 +526,7 @@ class StockInvoiceOnshipping(models.TransientModel):
                         lines.append((0, 0, line_values))
                 if line_values:  # Only create the invoice if it have lines
                     invoice_values['invoice_line_ids'] = lines
+                    invoice_values['date_invoice'] = self.invoice_date
                     invoice = self._create_invoice(invoice_values)
                     invoice._onchange_invoice_line_ids()
                     invoice.compute_taxes()
