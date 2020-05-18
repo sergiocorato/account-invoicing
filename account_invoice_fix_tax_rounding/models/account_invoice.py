@@ -15,6 +15,10 @@ class AccountInvoice(models.Model):
                     if taxes_grouped[key]['tax_id'] == tax_group.id:
                         taxes_recomputed = tax_group.compute_all(
                             taxes_grouped[key]['base'])
+                        if any(t.get('price_include', False) for t
+                               in taxes_recomputed['taxes']):
+                            # no need to do this check for price included taxes
+                            continue
                         amount_recomputed = sum(
                             [x['amount'] for x in taxes_recomputed['taxes']])
                         if float_compare(
